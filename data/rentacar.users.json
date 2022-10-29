@@ -1,0 +1,15 @@
+{
+    "version": 2,
+    "keys": [
+        "password",
+        "skey",
+        "user"
+    ],
+    "data": {
+        "104245001875094620": {
+            "user": "user",
+            "password": "password",
+            "skey": "c73ba2982c55b7ead0e4098a92f722bdb3a3b3d8"
+        }
+    }
+}

@@ -1,0 +1,29 @@
+{
+    "version": 2,
+    "keys": [
+        "brand",
+        "color",
+        "year",
+        "category"
+    ],
+    "data": {
+        "543984382318218286": {
+            "brand": "Lada",
+            "year": "1982",
+            "color": "Soviet blue",
+            "category": ""
+        },
+        "176342342618812623": {
+            "year": "1978",
+            "color": "Metal green",
+            "brand": "Moskvitch",
+            "category": "Public cars"
+        },
+        "224950951376616862": {
+            "year": "1975",
+            "brand": "ZIL-115",
+            "color": "Black",
+            "category": "Armored vehicle"
+        }
+    }
+}
