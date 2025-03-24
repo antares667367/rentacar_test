@@ -28,7 +28,6 @@ class RoutesBuilder:
     def add_path(
         self, name: str, path: str, extends: str = None, varia: list = []
     ) -> None:
-
         """Add a path to the list .
 
         Args:
@@ -61,13 +60,13 @@ class RoutesBuilder:
         fake = {}
         for k, v in self.chunks.items():
             if k != "base" and (True if trunk else not k.startswith("__")):
-                """Base path will not be diplayed as an item because
+                """Base path will not be displayed as an item because
                 it's already included
                 in the other generated paths.
                 Paths with a key starting with __ will
                 also not be displayed
                 """
-                # displayed routes wiull not include base path
+                # displayed routes will not include base path
                 if k in self.varia:
                     fake[k] = [
                         os.path.join(self.chunks["base"], v.replace("<param>", V))

@@ -15,15 +15,28 @@ jwt = JWTManager(app)
 # config token access secret key
 app.config["SECRET_KEY"] = "004f2af45d3a4e161a7dd2d17fdae47f"
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
+
+
 # init json databases
 def databases_setup():
+    """
+        Initializes and sets up the databases for the rental car application.
+    
+        This function creates two PysonDB instances, one for storing car information (carsdb)
+        and another for storing user information (usersdb). It also checks if a seed user
+        exists in the usersdb. If not, it creates a new user with the username "user",
+        password "password", and a hashed skey.
+    
+        Returns:
+        tuple: A tuple containing the carsdb and usersdb instances.
+    """
     carsdb = PysonDB("data/rentacar.cars.json")
     usersdb = PysonDB("data/rentacar.users.json")
 
     # ####SET SEED USER##################
     # init auth user/password for  fake auth (but look for it first)
     if not usersdb.get_by_query(
-        lambda x: x["skey"] == sha1("userpassword".encode()).hexdigest(),
+        lambda x: x["skey"] == sha1("user_password".encode()).hexdigest(),
     ):
         # created only if a matching record is not found
         pp("Creating user")
@@ -31,7 +44,7 @@ def databases_setup():
             {
                 "user": "user",
                 "password": "password",
-                "skey": sha1("userpassword".encode()).hexdigest(),
+                "skey": sha1("user_password".encode()).hexdigest(),
             }
         )
 
@@ -45,7 +58,9 @@ RB = RoutesBuilder("/rentacar")
 RB.add_path("__crud", "crud")
 RB.add_path("create", "create", extends="__crud")
 RB.add_path(
-    "retrieve", "retrieve/<param>", extends="__crud", varia=["all", "id", "query"]
+    "retrieve", 
+    "retrieve/<param>", 
+    extends="__crud", varia=["all", "id", "query"]
 )
 RB.add_path("update", "update/<param>", extends="__crud", varia=["id", "query"])
 RB.add_path(
@@ -61,22 +76,43 @@ RB.add_path("help", "help")
 
 @app.route(RB.path("help"), methods=["POST"])
 def help():
-    """test route
-    TEST
-
+    """
+    Provide information about available routes in the application.
+    This function handles the 'help' route and returns a JSON response
+    containing information about all the routes defined in the application.
     Returns:
-        routes
+        flask.Response: A JSON response containing a dictionary with a 'routes' key.
+            The value is the result of calling RB.displayroutes(), which likely
+            returns a list or dictionary of available routes.
     """
     return jsonify({"routes": RB.displayroutes()})
 
 
 @app.route(RB.path("login"), methods=["POST"])
 def login():
-    """Login route
-    LOGIN
+    """
+    Authenticate a user and generate an access token.
+
+    This function handles the login process. It receives user credentials
+    via a POST request, authenticates the user against the database,
+    and returns an access token if authentication is successful.
+
+    Parameters:
+    -----------
+    None (implicitly uses Flask's request object)
 
     Returns:
-        json:the result of the query
+    --------
+    flask.Response
+        A JSON response containing either:
+        - An access token if authentication is successful
+        - An error message if authentication fails
+
+    Notes:
+    ------
+    The function expects 'user' and 'password' fields in the request form data.
+    It uses the pass_auth function for authentication and create_access_token
+    to generate the JWT token.
     """
     RQF = request.form
     passed, user = pass_auth(RQF["user"], RQF["password"], usersdb)
@@ -92,11 +128,30 @@ def login():
 @app.route(RB.path("create"), methods=["POST"])
 @jwt_required()
 def create():
-    """Create a new car in the database
-    CREATE
+    """
+    Create a new car entry in the database.
+
+    This function handles the creation of a new car entry. It first checks if a car
+    with the same details already exists in the database. If not, it adds the new car.
+    If a matching car is found, it returns a message indicating that the car already exists.
+
+    The function requires JWT authentication to access.
+
+    Parameters:
+    -----------
+    None (implicitly uses Flask's request object)
 
     Returns:
-         json:the result of the query
+    --------
+    flask.Response
+        A JSON response containing either:
+        - The newly created car details if the car was successfully added
+        - A message indicating that the car already exists, along with the existing car details
+
+    Notes:
+    ------
+    The function expects the car details to be sent in the request form data.
+    It uses the carsdb database for querying and adding car entries.
     """
     RQF = request.form
     search = carsdb.get_by_query(lambda x: all(x[k] == v for k, v in RQF.items()))
@@ -110,14 +165,6 @@ def create():
 @app.route(RB.path("retrieve"), methods=["POST"])
 @jwt_required()
 def retrieve(param):
-    """Retrieve a specific car/all cars from the database
-    RETRIEVE
-    Args:
-        param str: param to supply to the route
-        XX/XX/retrieve/<all|id|query>
-    Returns:
-        json: The result of the query
-    """
     RQF = request.form
     params = {
         "all": lambda: carsdb.get_all(),
@@ -137,16 +184,6 @@ def retrieve(param):
 @app.route(RB.path("update"), methods=["POST"])
 @jwt_required()
 def update(param):
-    """Retrieve a specific car/all cars from the database
-    UPDATE
-    Args:
-        param str: param to supply to the route
-        XX/XX/update/<id|query>
-
-
-    Returns:
-        json: The result of the query
-    """
     RQF = request.form
     params = {
         "id": lambda: carsdb.update_by_id(RQF["id"], dictify(RQF["new_data"])),
@@ -166,15 +203,6 @@ def update(param):
 @app.route(RB.path("delete"), methods=["POST"])
 @jwt_required()
 def delete(param):
-    """Delete a specific car/all cars from the database
-    DELETE
-    Args:
-    param str: param to supply to the route
-    XX/XX/delete/<purge|id|query>
-
-    Returns:
-        [type]: [description]
-    """
     RQF = request.form
     params = {
         "purge": lambda: carsdb.purge(),  ## WARNING , purges the database
@@ -192,10 +220,9 @@ def delete(param):
         return jsonify({"msg": "The requested id does not exist in the database"})
 
 
-def dictify(qstring: str) -> dict:
-    """Transforms a query string into a dict"""
+def dictify(string: str) -> dict:
     stor = {}
-    Q = qstring.split(",")
+    Q = string.split(",")
     for q in Q:
         s = q.split("=")
         stor[s[0]] = s[1]
