@@ -3,6 +3,7 @@
         "carsdb",
         "dictify",
         "displayroutes",
+        "getusers",
         "jsonify",
         "pydberr",
         "pysondb",

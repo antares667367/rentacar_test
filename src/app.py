@@ -34,7 +34,7 @@ def databases_setup():
     usersdb = PysonDB("data/rentacar.users.json")
 
     # ####SET SEED USER##################
-    # init auth user/password for  fake auth (but look for it first)
+    # init auth user/password for fake auth.
     if not usersdb.get_by_query(
         lambda x: x["skey"] == sha1("user_password".encode()).hexdigest(),
     ):
@@ -57,15 +57,9 @@ RB = RoutesBuilder("/rentacar")
 ## crud part
 RB.add_path("__crud", "crud")
 RB.add_path("create", "create", extends="__crud")
-RB.add_path(
-    "retrieve", 
-    "retrieve/<param>", 
-    extends="__crud", varia=["all", "id", "query"]
-)
+RB.add_path("retrieve", "retrieve/<param>", extends="__crud", varia=["all", "id", "query"])
 RB.add_path("update", "update/<param>", extends="__crud", varia=["id", "query"])
-RB.add_path(
-    "delete", "delete/<param>", extends="__crud", varia=["id", "query", "purge"]
-)
+RB.add_path("delete", "delete/<param>", extends="__crud", varia=["id", "query", "purge"])
 ## auth part
 RB.add_path("__auth", "auth")
 RB.add_path("login", "login", extends="__auth")
@@ -220,9 +214,9 @@ def delete(param):
         return jsonify({"msg": "The requested id does not exist in the database"})
 
 
-def dictify(string: str) -> dict:
+def dictify(qstring: str) -> dict:
     stor = {}
-    Q = string.split(",")
+    Q = qstring.split(",")
     for q in Q:
         s = q.split("=")
         stor[s[0]] = s[1]
