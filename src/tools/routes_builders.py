@@ -28,13 +28,27 @@ class RoutesBuilder:
     def add_path(
         self, name: str, path: str, extends: str = None, varia: list = []
     ) -> None:
-        """Add a path to the list .
+        """
+        Add a new path to the list of routes.
 
+        This method adds a new path to the internal dictionary of routes. It can optionally
+        extend an existing path and include variable components.
         Args:
-            name (str):the name of the new path (used as key)
-            path (str): the path to add
-            existing (str, optional): makes use of an existing path
-            as path radical. Defaults to None.
+            name (str): The name of the new path, used as the key in the internal dictionary.
+            path (str): The path to add.
+            extends (str, optional): The name of an existing path to extend. If provided,
+            the new path will be appended to this existing path.
+            Defaults to None.
+            varia (list, optional): A list of variable components for the path. These can be
+                                    used to generate multiple variations of the path.
+                                    Defaults to an empty list.
+
+        Returns:
+            None
+
+        Side effects:
+            - Updates self.varia if varia is provided.
+            - Updates self.chunks with the new path.
         """
         _ = []
         if varia:

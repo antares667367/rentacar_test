@@ -20,15 +20,15 @@ app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
 # init json databases
 def databases_setup():
     """
-        Initializes and sets up the databases for the rental car application.
-    
-        This function creates two PysonDB instances, one for storing car information (carsdb)
-        and another for storing user information (usersdb). It also checks if a seed user
-        exists in the usersdb. If not, it creates a new user with the username "user",
-        password "password", and a hashed skey.
-    
-        Returns:
-        tuple: A tuple containing the carsdb and usersdb instances.
+    Initializes and sets up the databases for the rental car application.
+
+    This function creates two PysonDB instances, one for storing car information (carsdb)
+    and another for storing user information (usersdb). It also checks if a seed user
+    exists in the usersdb. If not, it creates a new user with the username "user",
+    password "password", and a hashed skey.
+
+    Returns:
+    tuple: A tuple containing the carsdb and usersdb instances.
     """
     carsdb = PysonDB("data/rentacar.cars.json")
     usersdb = PysonDB("data/rentacar.users.json")
@@ -57,9 +57,13 @@ RB = RoutesBuilder("/rentacar")
 ## crud part
 RB.add_path("__crud", "crud")
 RB.add_path("create", "create", extends="__crud")
-RB.add_path("retrieve", "retrieve/<param>", extends="__crud", varia=["all", "id", "query"])
+RB.add_path(
+    "retrieve", "retrieve/<param>", extends="__crud", varia=["all", "id", "query"]
+)
 RB.add_path("update", "update/<param>", extends="__crud", varia=["id", "query"])
-RB.add_path("delete", "delete/<param>", extends="__crud", varia=["id", "query", "purge"])
+RB.add_path(
+    "delete", "delete/<param>", extends="__crud", varia=["id", "query", "purge"]
+)
 ## auth part
 RB.add_path("__auth", "auth")
 RB.add_path("login", "login", extends="__auth")
@@ -159,6 +163,38 @@ def create():
 @app.route(RB.path("retrieve"), methods=["POST"])
 @jwt_required()
 def retrieve(param):
+    """
+    Retrieve car information from the database based on the specified parameter.
+
+    This function handles different types of retrieval operations on the car database.
+    It supports retrieving all cars, a specific car by ID, or cars matching a query.
+
+    Parameters:
+    -----------
+    param : str
+        The type of retrieval operation to perform. Valid values are:
+        - 'all': Retrieve all cars in the database.
+        - 'id': Retrieve a specific car by its ID.
+        - 'query': Retrieve cars matching a specific query.
+
+    Returns:
+    --------
+    flask.Response
+        A JSON response containing either:
+        - The requested car data if the operation is successful.
+        - An error message if the parameter is invalid or the requested ID doesn't exist.
+
+    Raises:
+    -------
+    pydberr.IdDoesNotExistError
+        If the requested ID does not exist in the database when using the 'id' parameter.
+
+    Notes:
+    ------
+    - The function requires JWT authentication to access.
+    - For 'id' and 'query' operations, the necessary data should be provided in the request form.
+    - The 'query' operation uses a dictionary created from a comma-separated string of key-value pairs.
+    """
     RQF = request.form
     params = {
         "all": lambda: carsdb.get_all(),
@@ -178,6 +214,39 @@ def retrieve(param):
 @app.route(RB.path("update"), methods=["POST"])
 @jwt_required()
 def update(param):
+    """
+    Update car information in the database based on the specified parameter.
+
+    This function handles different types of update operations on the car database.
+    It supports updating a specific car by ID or updating cars matching a query.
+
+    Parameters:
+    -----------
+    param : str
+        The type of update operation to perform. Valid values are:
+        - 'id': Update a specific car by its ID.
+        - 'query': Update cars matching a specific query.
+
+    Returns:
+    --------
+    flask.Response
+        A JSON response containing either:
+        - The result of the update operation if successful.
+        - An error message if the parameter is invalid or the requested ID doesn't exist.
+
+    Raises:
+    -------
+    pydberr.IdDoesNotExistError
+        If the requested ID does not exist in the database when using the 'id' parameter.
+
+    Notes:
+    ------
+    - The function requires JWT authentication to access.
+    - The necessary data for the update operation should be provided in the request form.
+    - For 'id' updates, 'id' and 'new_data' fields are required in the form.
+    - For 'query' updates, 'query' and 'new_data' fields are required in the form.
+    - The 'new_data' and 'query' (for query updates) should be provided as comma-separated strings of key-value pairs.
+    """
     RQF = request.form
     params = {
         "id": lambda: carsdb.update_by_id(RQF["id"], dictify(RQF["new_data"])),
@@ -197,6 +266,40 @@ def update(param):
 @app.route(RB.path("delete"), methods=["POST"])
 @jwt_required()
 def delete(param):
+    """
+    Delete car information from the database based on the specified parameter.
+
+    This function handles different types of delete operations on the car database.
+    It supports purging the entire database, deleting a specific car by ID, or
+    deleting cars matching a query.
+
+    Parameters:
+    -----------
+    param : str
+        The type of delete operation to perform. Valid values are:
+        - 'purge': Delete all entries in the database.
+        - 'id': Delete a specific car by its ID.
+        - 'query': Delete cars matching a specific query.
+
+    Returns:
+    --------
+    flask.Response
+        A JSON response containing either:
+        - The result of the delete operation if successful.
+        - An error message if the parameter is invalid or the requested ID doesn't exist.
+
+    Raises:
+    -------
+    pydberr.IdDoesNotExistError
+        If the requested ID does not exist in the database when using the 'id' parameter.
+
+    Notes:
+    ------
+    - The function requires JWT authentication to access.
+    - For 'id' and 'query' operations, the necessary data should be provided in the request form.
+    - The 'query' operation uses a dictionary created from a comma-separated string of key-value pairs.
+    - Use the 'purge' option with caution as it deletes all entries in the database.
+    """
     RQF = request.form
     params = {
         "purge": lambda: carsdb.purge(),  ## WARNING , purges the database
@@ -215,6 +318,27 @@ def delete(param):
 
 
 def dictify(qstring: str) -> dict:
+    """
+    Convert a comma-separated string of key-value pairs into a dictionary.
+
+    This function takes a string containing key-value pairs separated by commas,
+    where each pair is separated by an equals sign, and converts it into a dictionary.
+
+    Parameters:
+    -----------
+    qstring : str
+        A string containing key-value pairs in the format "key1=value1,key2=value2,...".
+
+    Returns:
+    --------
+    dict
+        A dictionary where the keys and values are extracted from the input string.
+
+    Example:
+    --------
+    >>> dictify("name=John,age=30")
+    {'name': 'John', 'age': '30'}
+    """
     stor = {}
     Q = qstring.split(",")
     for q in Q:
