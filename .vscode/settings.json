@@ -9,5 +9,6 @@
         "pysondb",
         "rentacar",
         "skey"
-    ]
+    ],
+    "wolf.disableHotModeWarning": true
 }

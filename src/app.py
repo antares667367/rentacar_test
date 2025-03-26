@@ -1,12 +1,10 @@
 from datetime import timedelta
 from hashlib import sha1
 from pprint import pprint as pp
-
 from flask import Flask, jsonify, request
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required
 from pysondb import PysonDB
 from pysondb import errors as pydberr
-
 from src import RoutesBuilder, pass_auth, rentacar_args
 
 # init flask app
