@@ -25,7 +25,7 @@ Super car management api
 
 ## Usage
 
-### Without Token necessary
+>only route listing can be done without token
 
 #### List available routes
 
